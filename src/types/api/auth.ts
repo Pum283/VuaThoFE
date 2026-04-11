@@ -5,8 +5,17 @@ export type SendOtpRequest = {
   phoneNumber: string
 }
 
+export type SendEmailOtpRequest = {
+  email: string
+}
+
 export type VerifyOtpRequest = {
   phoneNumber: string
+  otpCode: string
+}
+
+export type VerifyEmailOtpRequest = {
+  email: string
   otpCode: string
 }
 
@@ -18,7 +27,7 @@ export type VerifyOtpResponse = {
 export type RegisterCustomerRequest = {
   otpVerificationToken: string
   phoneNumber: string
-  email?: string | null
+  email: string
   password: string
   fullName: string
 }
@@ -26,11 +35,9 @@ export type RegisterCustomerRequest = {
 export type RegisterWorkerExternalRequest = {
   otpVerificationToken: string
   phoneNumber: string
-  email?: string | null
+  email: string
   password: string
   fullName: string
-  latitude: number
-  longitude: number
 }
 
 export type RegisterWorkerDirectRequest = RegisterWorkerExternalRequest
