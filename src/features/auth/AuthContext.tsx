@@ -8,6 +8,7 @@ type AuthState = {
   accessToken: string | null
   refreshToken: string | null
   role: string | null
+  fullName: string | null
 }
 
 type AuthContextValue = {
@@ -18,11 +19,19 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+/** Lấy tên hiển thị từ JWT theo nhiều chuẩn claim khác nhau. */
+function resolveFullName(accessToken: string | null) {
+  if (!accessToken) return null
+  const payload = decodeJwt(accessToken) as Record<string, string | undefined>
+  return payload.fullName ?? payload.unique_name ?? payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? null
+}
+
 function getInitialState(): AuthState {
   const accessToken = getAccessToken()
   const refreshToken = getRefreshToken()
   const role = accessToken ? decodeJwt(accessToken).role ?? null : null
-  return { accessToken, refreshToken, role }
+  const fullName = resolveFullName(accessToken)
+  return { accessToken, refreshToken, role, fullName }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -32,13 +41,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await authApi.login(request)
     setTokens(result.accessToken, result.refreshToken)
     const payload = decodeJwt(result.accessToken)
-    setState({ accessToken: result.accessToken, refreshToken: result.refreshToken, role: payload.role ?? null })
+    setState({
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      role: payload.role ?? null,
+      fullName: resolveFullName(result.accessToken) ?? result.userInfo.fullName ?? null,
+    })
     return result
   }, [])
 
   const logout = useCallback(() => {
     clearTokens()
-    setState({ accessToken: null, refreshToken: null, role: null })
+    setState({ accessToken: null, refreshToken: null, role: null, fullName: null })
   }, [])
 
   const value = useMemo<AuthContextValue>(() => ({ state, login, logout }), [state, login, logout])

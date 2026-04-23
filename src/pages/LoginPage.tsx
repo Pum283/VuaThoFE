@@ -4,13 +4,11 @@ import toast from 'react-hot-toast'
 import { useAuth } from '../features/auth/AuthContext'
 import { AuthSplitLayout } from '../components/auth/AuthSplitLayout'
 import { PasswordFieldWithToggle } from '../components/auth/PasswordFieldWithToggle'
-import { IconPersonCircle, IconUser } from '../components/auth/icons'
+import { IconUser } from '../components/auth/icons'
 
 function getRedirectPath(role: string | null) {
-  if (role === 'Admin') return '/admin/dashboard'
-  if (role === 'Customer') return '/home'
-  if (role === 'WorkerExternal' || role === 'WorkerDirect') return '/worker/home'
-  return '/home'
+  if (role === 'Admin' || role === 'Customer' || role === 'WorkerExternal') return '/app'
+  return '/app'
 }
 
 export function LoginPage() {
@@ -42,15 +40,11 @@ export function LoginPage() {
   return (
     <AuthSplitLayout
       heroTitle="Chào mừng."
-      heroSubtitle="Đăng nhập để tiếp tục đặt lịch, theo dõi thợ và quản lý tài khoản của bạn trên Vua Thợ."
+      heroSubtitle="Fixy - sửa gì cũng dễ"
       footerCta={{ text: 'Chưa có tài khoản?', linkText: 'Đăng ký ngay', to: '/register' }}
       topRightTo="/register"
       topRightLabel="Đăng ký"
     >
-      <div className="auth-form-panel__avatar" aria-hidden="true">
-        <IconPersonCircle />
-      </div>
-
       <h1 className="auth-form-panel__title">Đăng nhập</h1>
       <p className="auth-form-panel__lead">Số điện thoại hoặc email và mật khẩu</p>
 

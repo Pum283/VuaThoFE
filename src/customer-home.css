@@ -1,8 +1,8 @@
 /* Trang chủ khách hàng — nền sáng, tách biệt body tối mặc định */
 .customer-home {
   min-height: 100vh;
-  background: #ffffff;
-  color: #111827;
+  background: var(--app-color-bg);
+  color: var(--app-color-text-primary);
 }
 
 .customer-home-header {
@@ -13,8 +13,8 @@
   max-width: 1120px;
   margin: 0 auto;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: #ffffff;
+  border-bottom: 1px solid var(--app-color-border);
+  background: var(--app-color-surface);
 }
 
 .customer-home-brand {
@@ -31,17 +31,32 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 9999px;
-  background: #2563eb;
-  color: #ffffff;
+  border-radius: var(--app-radius-md);
+  border: 1px dashed #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.customer-home-brand__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
 .customer-home-brand__text {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--app-color-primary);
+}
+
+.customer-home-brand__slogan {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--app-color-text-secondary);
 }
 
 .customer-home-nav {
@@ -54,46 +69,56 @@
 
 .customer-home-nav__link {
   padding: 0.5rem 0.75rem;
-  color: #374151;
+  color: var(--app-color-text-secondary);
   text-decoration: none;
   font-size: 0.95rem;
-  border-radius: 0.5rem;
+  border-radius: var(--app-radius-md);
+  transition:
+    color var(--app-transition-fast),
+    background-color var(--app-transition-fast);
 }
 
 .customer-home-nav__link:hover {
-  color: #2563eb;
-  background: #eff6ff;
+  color: var(--app-color-primary);
+  background: var(--app-color-primary-soft);
 }
 
 .customer-home-nav__btn {
   margin-left: 0.25rem;
   padding: 0.5rem 1.1rem;
-  border-radius: 9999px;
+  border-radius: var(--app-radius-pill);
   border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #374151;
+  background: var(--app-color-surface);
+  color: var(--app-color-text-secondary);
   font-size: 0.95rem;
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition:
+    transform var(--app-transition-fast),
+    box-shadow var(--app-transition-fast),
+    background-color var(--app-transition-fast),
+    border-color var(--app-transition-fast);
 }
 
 .customer-home-nav__btn:hover {
   border-color: #9ca3af;
   background: #f9fafb;
+  transform: translateY(-1px);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .customer-home-nav__btn--primary {
-  border-color: #2563eb;
-  background: #2563eb;
+  border-color: var(--app-color-primary);
+  background: var(--app-color-primary);
   color: #ffffff;
 }
 
 .customer-home-nav__btn--primary:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
+  background: var(--app-color-primary-strong);
+  border-color: var(--app-color-primary-strong);
 }
 
 .customer-home-main {
@@ -107,13 +132,13 @@
   text-align: center;
   font-size: 1.75rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--app-color-text-primary);
 }
 
 .customer-home-hero-sub {
   margin: 0.5rem 0 0;
   text-align: center;
-  color: #6b7280;
+  color: var(--app-color-text-secondary);
   font-size: 1rem;
 }
 
@@ -142,20 +167,22 @@
   align-items: center;
   text-align: center;
   padding: 1.5rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: var(--app-radius-lg);
+  border: 1px solid var(--app-color-border);
+  background: var(--app-color-surface);
+  box-shadow: var(--app-shadow-sm);
   text-decoration: none;
   color: inherit;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    transform var(--app-transition-fast),
+    border-color var(--app-transition-fast),
+    box-shadow var(--app-transition-fast);
 }
 
 .customer-home-card:hover {
   border-color: #bfdbfe;
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+  transform: translateY(-1px);
+  box-shadow: var(--app-shadow-md);
 }
 
 .customer-home-card__icon-wrap {
@@ -205,19 +232,19 @@
   margin: 0;
   font-size: 1.05rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--app-color-text-primary);
 }
 
 .customer-home-card__count {
   margin: 0.35rem 0 0;
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--app-color-text-secondary);
 }
 
 .customer-home-why {
   margin-top: 3rem;
   padding-top: 2.5rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--app-color-border);
 }
 
 .customer-home-why__title {
@@ -225,7 +252,7 @@
   text-align: center;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--app-color-text-primary);
 }
 
 .customer-home-why__list {
@@ -246,21 +273,21 @@
 .customer-home-why__item {
   margin: 0;
   padding: 1.25rem;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border-radius: var(--app-radius-lg);
+  border: 1px solid var(--app-color-border);
+  background: var(--app-color-surface);
 }
 
 .customer-home-why__item-title {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--app-color-text-primary);
 }
 
 .customer-home-why__item-text {
   margin: 0.5rem 0 0;
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--app-color-text-secondary);
   line-height: 1.5;
 }

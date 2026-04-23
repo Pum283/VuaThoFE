@@ -58,15 +58,6 @@ export async function registerWorkerExternal(formData: FormData) {
   return res.data
 }
 
-export async function registerWorkerDirect(formData: FormData) {
-  const res = await apiClient.post<AuthResponse>(
-    '/api/v1/auth/register/worker-direct',
-    formData,
-    multipartFormConfig,
-  )
-  return res.data
-}
-
 export async function login(request: LoginRequest) {
   const res = await apiClient.post<AuthResponse>('/api/v1/auth/login', request)
   return res.data

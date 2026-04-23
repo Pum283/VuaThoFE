@@ -4,7 +4,7 @@ export function CustomerWhySection() {
   return (
     <section className="customer-home-why" aria-labelledby="customer-home-why-title">
       <h2 id="customer-home-why-title" className="customer-home-why__title">
-        Tại sao chọn Vua Thợ?
+        Tại sao chọn Fixy?
       </h2>
       <ul className="customer-home-why__list">
         {CUSTOMER_HOME_WHY_ITEMS.map((item) => (

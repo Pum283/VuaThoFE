@@ -33,6 +33,7 @@ export type WorkerRegistrationTextFields = {
 }
 
 export type WorkerExternalRegistrationFields = WorkerRegistrationTextFields & {
+  categoryIds: string[]
   diploma: File | null
   identityCard: File
   otherDocuments: File[]
@@ -45,6 +46,9 @@ export function buildWorkerExternalRegistrationFormData(fields: WorkerExternalRe
   fd.append('email', fields.email)
   fd.append('password', fields.password)
   fd.append('fullName', fields.fullName)
+  for (const id of fields.categoryIds) {
+    fd.append('categoryIds', id)
+  }
   if (fields.diploma) {
     fd.append('diploma', fields.diploma)
   }
@@ -52,18 +56,5 @@ export function buildWorkerExternalRegistrationFormData(fields: WorkerExternalRe
   for (const f of fields.otherDocuments) {
     fd.append('otherDocuments', f)
   }
-  return fd
-}
-
-export type WorkerDirectRegistrationFields = WorkerRegistrationTextFields & { cv: File }
-
-export function buildWorkerDirectRegistrationFormData(fields: WorkerDirectRegistrationFields) {
-  const fd = new FormData()
-  fd.append('otpVerificationToken', fields.otpVerificationToken)
-  fd.append('phoneNumber', fields.phoneNumber)
-  fd.append('email', fields.email)
-  fd.append('password', fields.password)
-  fd.append('fullName', fields.fullName)
-  fd.append('cv', fields.cv)
   return fd
 }

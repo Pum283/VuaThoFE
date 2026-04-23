@@ -13,11 +13,14 @@ export function CustomerHomeHeader() {
 
   return (
     <header className="customer-home-header">
-      <Link to="/home" className="customer-home-brand" aria-label="Vua Thợ — Trang chủ">
+      <Link to="/home" className="customer-home-brand" aria-label="Fixy — Trang chủ">
         <span className="customer-home-brand__mark" aria-hidden="true">
-          V
+          Logo
         </span>
-        <span className="customer-home-brand__text">Vua Thợ</span>
+        <span className="customer-home-brand__content">
+          <span className="customer-home-brand__text">Fixy</span>
+          <span className="customer-home-brand__slogan">Fixy - sửa gì cũng dễ</span>
+        </span>
       </Link>
 
       <nav className="customer-home-nav" aria-label="Điều hướng chính">

@@ -1,25 +1,34 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { OtpInput } from '../components/auth/OtpInput'
 import * as authApi from '../features/auth/authApi'
 import { useAuth } from '../features/auth/AuthContext'
+import { getCategories } from '../features/categories/categoriesApi'
 import {
-  buildWorkerDirectRegistrationFormData,
   buildWorkerExternalRegistrationFormData,
   validateWorkerRegistrationFile,
 } from '../features/auth/workerRegistrationUpload'
 import { AuthSplitLayout } from '../components/auth/AuthSplitLayout'
 import { PasswordFieldWithToggle } from '../components/auth/PasswordFieldWithToggle'
-import { IconPersonCircle } from '../components/auth/icons'
+import type { CategoryDto } from '../types/api/category'
 
-type RegisterTab = 'Customer' | 'WorkerExternal' | 'WorkerDirect'
+type RegisterTab = 'Customer' | 'WorkerExternal'
+
+const REGISTER_ROLE_HERO_CONTENT: Record<RegisterTab, { title: string; subtitle: string }> = {
+  Customer: {
+    title: 'Khách hàng.',
+    subtitle: 'Tạo tài khoản để đặt dịch vụ, theo dõi lịch hẹn và quản lý nhu cầu sửa chữa nhanh chóng.',
+  },
+  WorkerExternal: {
+    title: 'Thợ.',
+    subtitle: 'Đăng ký hồ sơ thợ, gửi giấy tờ xác minh và chờ duyệt để bắt đầu nhận việc trên Fixy.',
+  },
+}
 
 function getRedirectPath(role: string) {
-  if (role === 'Admin') return '/admin/dashboard'
-  if (role === 'Customer') return '/home'
-  if (role === 'WorkerExternal' || role === 'WorkerDirect') return '/worker/home'
-  return '/home'
+  if (role === 'Admin' || role === 'Customer' || role === 'WorkerExternal') return '/app'
+  return '/app'
 }
 
 function getErrorMessage(err: unknown, fallback: string) {
@@ -32,8 +41,13 @@ function getErrorMessage(err: unknown, fallback: string) {
 export function RegisterPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
-
   const [tab, setTab] = useState<RegisterTab>('Customer')
+  const heroContent = REGISTER_ROLE_HERO_CONTENT[tab]
+
+  const [categories, setCategories] = useState<CategoryDto[]>([])
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
+
   const [email, setEmail] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [fullName, setFullName] = useState('')
@@ -46,7 +60,27 @@ export function RegisterPage() {
   const [externalDiploma, setExternalDiploma] = useState<File | null>(null)
   const [externalIdentityCard, setExternalIdentityCard] = useState<File | null>(null)
   const [externalOtherDocuments, setExternalOtherDocuments] = useState<File[]>([])
-  const [directCv, setDirectCv] = useState<File | null>(null)
+
+  useEffect(() => {
+    if (tab !== 'WorkerExternal') return
+    if (categories.length > 0) return
+
+    setIsLoadingCategories(true)
+    getCategories()
+      .then((data) => {
+        setCategories(data)
+      })
+      .catch(() => {
+        toast.error('Không thể tải danh sách chuyên môn. Vui lòng thử lại.')
+      })
+      .finally(() => {
+        setIsLoadingCategories(false)
+      })
+  }, [categories.length, tab])
+
+  const categoryById = useMemo(() => {
+    return Object.fromEntries(categories.map((c) => [c.id, c]))
+  }, [categories])
 
   const onSendEmailOtp = async () => {
     const trimmed = email.trim()
@@ -91,6 +125,10 @@ export function RegisterPage() {
     }
 
     if (tab === 'WorkerExternal') {
+      if (selectedCategoryIds.length === 0) {
+        toast.error('Vui lòng chọn ít nhất 1 chuyên môn.')
+        return
+      }
       if (!externalIdentityCard) {
         toast.error('Vui lòng đính kèm file CCCD / giấy tờ định danh.')
         return
@@ -102,18 +140,6 @@ export function RegisterPage() {
           toast.error(msg)
           return
         }
-      }
-    }
-
-    if (tab === 'WorkerDirect') {
-      if (!directCv) {
-        toast.error('Vui lòng đính kèm file CV.')
-        return
-      }
-      const msg = validateWorkerRegistrationFile(directCv)
-      if (msg) {
-        toast.error(msg)
-        return
       }
     }
 
@@ -130,21 +156,15 @@ export function RegisterPage() {
       const res =
         tab === 'Customer'
           ? await authApi.registerCustomer(base)
-          : tab === 'WorkerExternal'
-            ? await authApi.registerWorkerExternal(
-                buildWorkerExternalRegistrationFormData({
-                  ...base,
-                  diploma: externalDiploma,
-                  identityCard: externalIdentityCard!,
-                  otherDocuments: externalOtherDocuments,
-                }),
-              )
-            : await authApi.registerWorkerDirect(
-                buildWorkerDirectRegistrationFormData({
-                  ...base,
-                  cv: directCv!,
-                }),
-              )
+          : await authApi.registerWorkerExternal(
+              buildWorkerExternalRegistrationFormData({
+                ...base,
+                categoryIds: selectedCategoryIds,
+                diploma: externalDiploma,
+                identityCard: externalIdentityCard!,
+                otherDocuments: externalOtherDocuments,
+              }),
+            )
 
       toast.success('Đăng ký thành công.')
       await login({ identifier: phoneNumber.trim(), password })
@@ -158,16 +178,12 @@ export function RegisterPage() {
 
   return (
     <AuthSplitLayout
-      heroTitle="Tham gia."
-      heroSubtitle="Tạo tài khoản để đặt dịch vụ hoặc trở thành đối tác thợ trên nền tảng Vua Thợ."
+      heroTitle={heroContent.title}
+      heroSubtitle={heroContent.subtitle}
       footerCta={{ text: 'Đã có tài khoản?', linkText: 'Đăng nhập', to: '/login' }}
       topRightTo="/login"
       topRightLabel="Đăng nhập"
     >
-      <div className="auth-form-panel__avatar" aria-hidden="true">
-        <IconPersonCircle />
-      </div>
-
       <h1 className="auth-form-panel__title">Đăng ký</h1>
 
       <div className="auth-tabs" role="tablist" aria-label="Loại tài khoản">
@@ -181,7 +197,7 @@ export function RegisterPage() {
             setExternalDiploma(null)
             setExternalIdentityCard(null)
             setExternalOtherDocuments([])
-            setDirectCv(null)
+            setSelectedCategoryIds([])
           }}
         >
           Khách hàng
@@ -193,172 +209,233 @@ export function RegisterPage() {
           className={tab === 'WorkerExternal' ? 'auth-tab active' : 'auth-tab'}
           onClick={() => {
             setTab('WorkerExternal')
-            setDirectCv(null)
           }}
         >
-          Thợ ngoài
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'WorkerDirect'}
-          className={tab === 'WorkerDirect' ? 'auth-tab active' : 'auth-tab'}
-          onClick={() => {
-            setTab('WorkerDirect')
-            setExternalDiploma(null)
-            setExternalIdentityCard(null)
-            setExternalOtherDocuments([])
-          }}
-        >
-          Thợ công ty
+          Thợ
         </button>
       </div>
 
-      <div className="auth-form-stack">
-        <div className="auth-field">
-          <span className="auth-label">Email (nhận OTP)</span>
-          <div className="auth-inline-row">
-            <input
-              className="auth-input-plain"
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value)
-                setOtpVerificationToken(null)
-              }}
-              placeholder="you@example.com"
-              autoComplete="email"
-            />
-            <button
-              className="auth-secondary-btn auth-secondary-btn--compact"
-              type="button"
-              onClick={onSendEmailOtp}
-              disabled={isLoading}
-            >
-              Gửi OTP
-            </button>
+      <div className="auth-form-stack auth-form-stack--register">
+        <div className="auth-grid2 auth-grid2--register-top">
+          <div className="auth-field">
+            <span className="auth-label">Email (nhận OTP)</span>
+            <div className="auth-inline-row">
+              <input
+                className="auth-input-plain"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setOtpVerificationToken(null)
+                }}
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+              <button
+                className="auth-secondary-btn auth-secondary-btn--compact"
+                type="button"
+                onClick={onSendEmailOtp}
+                disabled={isLoading}
+              >
+                Gửi OTP
+              </button>
+            </div>
           </div>
-        </div>
 
-        <OtpInput
-          value={otp}
-          onChange={setOtp}
-          disabled={isLoading}
-          label="Mã OTP từ email"
-          actionSlot={
-            <button
-              className="auth-secondary-btn auth-secondary-btn--compact"
-              type="button"
-              onClick={onVerifyEmailOtp}
-              disabled={isLoading}
-            >
-              Xác nhận OTP
-            </button>
-          }
-        />
+          <OtpInput
+            value={otp}
+            onChange={setOtp}
+            disabled={isLoading}
+            label="Mã OTP từ email"
+            actionSlot={
+              <button
+                className="auth-secondary-btn auth-secondary-btn--compact"
+                type="button"
+                onClick={onVerifyEmailOtp}
+                disabled={isLoading}
+              >
+                Xác nhận OTP
+              </button>
+            }
+          />
+        </div>
 
         <div className="auth-hint-row">
           <span className="auth-hint">{otpVerificationToken ? 'Email đã xác thực' : 'Chưa xác thực email'}</span>
         </div>
 
-        <label className="auth-field">
-          <span className="auth-label">Số điện thoại (đăng nhập)</span>
-          <input
-            className="auth-input-plain"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="090..."
-            inputMode="tel"
-            autoComplete="tel"
-          />
-        </label>
+        <div className="auth-grid2">
+          <label className="auth-field">
+            <span className="auth-label">Số điện thoại (đăng nhập)</span>
+            <input
+              className="auth-input-plain"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="090..."
+              inputMode="tel"
+              autoComplete="tel"
+            />
+          </label>
 
-        <label className="auth-field">
-          <span className="auth-label">Họ và tên</span>
-          <input className="auth-input-plain" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
-        </label>
-
-        <div className="auth-field">
-          <span className="auth-label" id="register-password-label">
-            Mật khẩu
-          </span>
-          <PasswordFieldWithToggle
-            id="register-password"
-            value={password}
-            onChange={setPassword}
-            placeholder="Mật khẩu"
-            autoComplete="new-password"
-            aria-labelledby="register-password-label"
-          />
+          <label className="auth-field">
+            <span className="auth-label">Họ và tên</span>
+            <input className="auth-input-plain" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
+          </label>
         </div>
 
-        <div className="auth-field">
-          <span className="auth-label" id="register-confirm-password-label">
-            Xác nhận lại mật khẩu
-          </span>
-          <PasswordFieldWithToggle
-            id="register-confirm-password"
-            value={confirmPassword}
-            onChange={setConfirmPassword}
-            placeholder="Nhập lại mật khẩu"
-            autoComplete="new-password"
-            aria-labelledby="register-confirm-password-label"
-          />
+        <div className="auth-grid2">
+          <div className="auth-field">
+            <span className="auth-label" id="register-password-label">
+              Mật khẩu
+            </span>
+            <PasswordFieldWithToggle
+              id="register-password"
+              value={password}
+              onChange={setPassword}
+              placeholder="Mật khẩu"
+              autoComplete="new-password"
+              aria-labelledby="register-password-label"
+            />
+          </div>
+
+          <div className="auth-field">
+            <span className="auth-label" id="register-confirm-password-label">
+              Xác nhận lại mật khẩu
+            </span>
+            <PasswordFieldWithToggle
+              id="register-confirm-password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              placeholder="Nhập lại mật khẩu"
+              autoComplete="new-password"
+              aria-labelledby="register-confirm-password-label"
+            />
+          </div>
         </div>
 
         {tab === 'WorkerExternal' ? (
-          <>
-            <div className="auth-field">
-              <span className="auth-label">Bằng cấp (tuỳ chọn)</span>
-              <input
-                className="auth-input-plain"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                onChange={(e) => setExternalDiploma(e.target.files?.[0] ?? null)}
-              />
-              {externalDiploma ? <span className="auth-hint">{externalDiploma.name}</span> : null}
-            </div>
-            <div className="auth-field">
-              <span className="auth-label">CCCD / giấy tờ định danh (bắt buộc)</span>
-              <input
-                className="auth-input-plain"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                onChange={(e) => setExternalIdentityCard(e.target.files?.[0] ?? null)}
-              />
-              {externalIdentityCard ? <span className="auth-hint">{externalIdentityCard.name}</span> : null}
-            </div>
-            <div className="auth-field">
-              <span className="auth-label">Giấy tờ khác (tuỳ chọn, có thể chọn nhiều file)</span>
-              <input
-                className="auth-input-plain"
-                type="file"
-                multiple
-                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                onChange={(e) => setExternalOtherDocuments(e.target.files ? Array.from(e.target.files) : [])}
-              />
-              {externalOtherDocuments.length > 0 ? (
-                <span className="auth-hint">{externalOtherDocuments.map((f) => f.name).join(', ')}</span>
+          <div className="auth-upload-grid">
+            <section className="auth-upload-card auth-upload-card--full" aria-label="Chọn chuyên môn">
+              <div className="auth-upload-card__head">
+                <span className="auth-label">Chuyên môn</span>
+                <span className="auth-upload-card__tag auth-upload-card__tag--required">Bắt buộc</span>
+              </div>
+              {isLoadingCategories ? (
+                <p className="hint">Đang tải danh sách chuyên môn...</p>
+              ) : categories.length === 0 ? (
+                <p className="hint">Chưa có chuyên môn nào. Vui lòng liên hệ admin để tạo danh sách.</p>
+              ) : (
+                <div className="auth-upload-card__dropzone" role="group" aria-label="Danh sách chuyên môn">
+                  {categories.map((cat) => {
+                    const checked = selectedCategoryIds.includes(cat.id)
+                    return (
+                      <label key={cat.id} className="auth-inline-row">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? Array.from(new Set([...selectedCategoryIds, cat.id]))
+                              : selectedCategoryIds.filter((id) => id !== cat.id)
+                            setSelectedCategoryIds(next)
+                          }}
+                        />
+                        <span>
+                          {cat.name}
+                          {cat.description ? <span className="hint"> — {cat.description}</span> : null}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+              {selectedCategoryIds.length > 0 ? (
+                <p className="hint">
+                  Đã chọn: {selectedCategoryIds.map((id) => categoryById[id]?.name ?? id).join(', ')}
+                </p>
               ) : null}
-            </div>
-            <p className="auth-hint">Định dạng: PDF, JPG, PNG, WEBP — tối đa 10 MB mỗi file.</p>
-          </>
-        ) : null}
+            </section>
 
-        {tab === 'WorkerDirect' ? (
-          <>
-            <div className="auth-field">
-              <span className="auth-label">CV (bắt buộc)</span>
-              <input
-                className="auth-input-plain"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                onChange={(e) => setDirectCv(e.target.files?.[0] ?? null)}
-              />
-              {directCv ? <span className="auth-hint">{directCv.name}</span> : null}
+            <div className="auth-upload-card">
+              <div className="auth-upload-card__head">
+                <span className="auth-label">Bằng cấp</span>
+                <span className="auth-upload-card__tag">Tuỳ chọn</span>
+              </div>
+              <label className="auth-upload-card__dropzone">
+                <input
+                  className="auth-upload-card__input"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                  onChange={(e) => setExternalDiploma(e.target.files?.[0] ?? null)}
+                />
+                {externalDiploma ? (
+                  <>
+                    <span className="auth-upload-card__selected-name">{externalDiploma.name}</span>
+                    <span className="auth-upload-card__cta auth-upload-card__cta--small">Tải lại</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="auth-upload-card__cta">Chọn tệp</span>
+                    <span className="auth-upload-card__meta">PDF, JPG, PNG, WEBP - tối đa 10 MB</span>
+                  </>
+                )}
+              </label>
             </div>
-            <p className="auth-hint">Định dạng: PDF, JPG, PNG, WEBP — tối đa 10 MB.</p>
-          </>
+            <div className="auth-upload-card">
+              <div className="auth-upload-card__head">
+                <span className="auth-label">CCCD</span>
+                <span className="auth-upload-card__tag auth-upload-card__tag--required">Bắt buộc</span>
+              </div>
+              <label className="auth-upload-card__dropzone">
+                <input
+                  className="auth-upload-card__input"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                  onChange={(e) => setExternalIdentityCard(e.target.files?.[0] ?? null)}
+                />
+                {externalIdentityCard ? (
+                  <>
+                    <span className="auth-upload-card__selected-name">{externalIdentityCard.name}</span>
+                    <span className="auth-upload-card__cta auth-upload-card__cta--small">Tải lại</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="auth-upload-card__cta">Chọn tệp</span>
+                    <span className="auth-upload-card__meta">PDF, JPG, PNG, WEBP - tối đa 10 MB</span>
+                  </>
+                )}
+              </label>
+            </div>
+            <div className="auth-upload-card auth-upload-card--full">
+              <div className="auth-upload-card__head">
+                <span className="auth-label">Giấy tờ khác</span>
+                <span className="auth-upload-card__tag">Tuỳ chọn</span>
+              </div>
+              <label className="auth-upload-card__dropzone">
+                <input
+                  className="auth-upload-card__input"
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                  onChange={(e) => setExternalOtherDocuments(e.target.files ? Array.from(e.target.files) : [])}
+                />
+                {externalOtherDocuments.length > 0 ? (
+                  <>
+                    <span className="auth-upload-card__selected-name">
+                      {externalOtherDocuments[externalOtherDocuments.length - 1].name}
+                    </span>
+                    <span className="auth-upload-card__meta">{externalOtherDocuments.length} tệp đã chọn</span>
+                    <span className="auth-upload-card__cta auth-upload-card__cta--small">Tải lại</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="auth-upload-card__cta">Chọn nhiều tệp</span>
+                    <span className="auth-upload-card__meta">PDF, JPG, PNG, WEBP - tối đa 10 MB mỗi tệp</span>
+                  </>
+                )}
+              </label>
+            </div>
+          </div>
         ) : null}
 
         <button className="auth-primary-btn" type="button" onClick={onRegister} disabled={isLoading}>
@@ -366,11 +443,6 @@ export function RegisterPage() {
         </button>
       </div>
 
-      <div className="auth-dots" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
     </AuthSplitLayout>
   )
 }

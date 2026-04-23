@@ -1,4 +1,4 @@
-export type WorkerType = 'Direct' | 'External'
+export type WorkerType = 'External'
 export type WorkerStatus = 'Pending' | 'Approved' | 'Rejected' | 'Inactive'
 
 export type SendOtpRequest = {
@@ -40,8 +40,6 @@ export type RegisterWorkerExternalRequest = {
   fullName: string
 }
 
-export type RegisterWorkerDirectRequest = RegisterWorkerExternalRequest
-
 export type LoginRequest = {
   identifier: string
   password: string
@@ -55,7 +53,7 @@ export type AuthResponse = {
   accessToken: string
   refreshToken: string
   userInfo: {
-    userId: number
+    userId: string
     phoneNumber: string
     email?: string | null
     fullName: string

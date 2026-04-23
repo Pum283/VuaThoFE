@@ -12,7 +12,7 @@ type AuthSplitLayoutProps = {
 export function AuthSplitLayout({
   children,
   heroTitle = 'Chào mừng.',
-  heroSubtitle = 'Vua Thợ kết nối bạn với thợ chuyên nghiệp đa ngành nghề — nhanh chóng, minh bạch và đáng tin cậy.',
+  heroSubtitle = 'Fixy - sửa gì cũng dễ',
   footerCta,
   topRightTo = '/login',
   topRightLabel = 'Đăng nhập',
@@ -20,7 +20,18 @@ export function AuthSplitLayout({
   return (
     <div className="auth-shell">
       <div className="auth-card">
-        <aside className="auth-form-panel">{children}</aside>
+        <aside className="auth-form-panel">
+          <div className="auth-form-panel__brand">
+            <span className="auth-form-panel__logo-placeholder" aria-hidden="true">
+              Logo
+            </span>
+            <div className="auth-form-panel__brand-copy">
+              <p className="auth-form-panel__brand-name">Fixy</p>
+              <p className="auth-form-panel__brand-slogan">Fixy - sửa gì cũng dễ</p>
+            </div>
+          </div>
+          {children}
+        </aside>
 
         <aside className="auth-hero" aria-label="Giới thiệu ngắn">
           <div className="auth-hero__bg" aria-hidden="true">

@@ -35,8 +35,10 @@ export function AuthSplitShell({
       <div className="auth-card">
         <div className="auth-panel auth-panel--form">
           <div className="auth-brand">
-            <span className="auth-brand__mark" aria-hidden="true" />
-            <span className="auth-brand__text">Vua Thợ</span>
+            <span className="auth-brand__mark" aria-hidden="true">
+              Logo
+            </span>
+            <span className="auth-brand__text">Fixy</span>
           </div>
           {children}
           <div className="auth-dots" aria-hidden="true">
